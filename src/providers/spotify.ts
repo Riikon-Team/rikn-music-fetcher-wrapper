@@ -1,15 +1,17 @@
 import axios, { AxiosInstance } from "axios";
 import type {
   SpotifyAPIConfig,
-  FormattedTrack,
-  SpotifyAlbum,
-  SpotifyPlaylist,
-  SpotifySearchResults,
-  SpotifyTrack,
-  SpotifyImage,
-  SpotifyArtist,
-  FormattedAlbum,
 } from "../types/spotify.type";
+
+import type {
+  Album,
+  Artist,
+  Playlist,
+  Track,
+  SearchResults,
+  Image
+} from "../types/music.type";
+
 import {
   SPOTIFY_API_BASE_URL,
   SPOTIFY_DEFAULT_MARKET,
@@ -139,7 +141,7 @@ class SpotifyAPI {
     market: string = SPOTIFY_DEFAULT_MARKET,
     limit: number = 20,
     offset: number = 0
-  ): Promise<SpotifySearchResults> {
+  ): Promise<SearchResults> {
     if (!query) {
       throw new Error("Search query is required");
     }
@@ -165,7 +167,7 @@ class SpotifyAPI {
     market: string = SPOTIFY_DEFAULT_MARKET,
     limit: number = SPOTIFY_DEFAULT_SEARCH_LIMIT,
     offset: number = 0
-  ): Promise<SpotifyTrack[]> {
+  ): Promise<Track[]> {
     const results = await this.search(
       query,
       [SpotifySearchType.TRACKS],
@@ -181,7 +183,7 @@ class SpotifyAPI {
     market: string = SPOTIFY_DEFAULT_MARKET,
     limit: number = SPOTIFY_DEFAULT_SEARCH_LIMIT,
     offset: number = 0
-  ): Promise<SpotifyAlbum[]> {
+  ): Promise<Album[]> {
     const results = await this.search(
       query,
       [SpotifySearchType.ALBUMS],
@@ -197,7 +199,7 @@ class SpotifyAPI {
     market: string = SPOTIFY_DEFAULT_MARKET,
     limit: number = SPOTIFY_DEFAULT_SEARCH_LIMIT,
     offset: number = 0
-  ): Promise<SpotifyArtist[]> {
+  ): Promise<Artist[]> {
     const results = await this.search(
       query,
       [SpotifySearchType.ARTISTS],
@@ -213,7 +215,7 @@ class SpotifyAPI {
     market: string = SPOTIFY_DEFAULT_MARKET,
     limit: number = SPOTIFY_DEFAULT_SEARCH_LIMIT,
     offset: number = 0
-  ): Promise<SpotifyPlaylist[]> {
+  ): Promise<Playlist[]> {
     const results = await this.search(
       query,
       [SpotifySearchType.PLAYLISTS],
@@ -224,7 +226,7 @@ class SpotifyAPI {
     return results.playlists;
   }
 
-  async getTrack(trackId: string): Promise<FormattedTrack> {
+  async getTrack(trackId: string): Promise<Track> {
     const r = await this.client.get(`/tracks/${trackId}`);
     if (r.status !== 200) {
       throw new Error(`Spotify Track Error: ${r.statusText}`);
@@ -234,7 +236,7 @@ class SpotifyAPI {
     return this.formatTrack(data);
   }
 
-  async getPlaylist(playlistId: string): Promise<SpotifyPlaylist> {
+  async getPlaylist(playlistId: string): Promise<Playlist> {
     const r = await this.client.get(`/playlists/${playlistId}`);
     if (r.status !== 200) {
       throw new Error(`Spotify Playlist Error: ${r.statusText}`);
@@ -249,14 +251,14 @@ class SpotifyAPI {
     return {
       id: data.id,
       name: data.name,
-      tracks: {
-        items: tracks,
-        total: data.tracks.total,
-      },
+      total: data.tracks.total,
+      tracks: tracks,
+      url: data.external_urls?.spotify || `https://open.spotify.com/playlist/${data.id}`,
+      platform: "spotify",
     };
   }
 
-  async getAlbum(albumId: string): Promise<FormattedAlbum> {
+  async getAlbum(albumId: string): Promise<Album> {
     const r = await this.client.get(`/albums/${albumId}`);
     const response = r;
 
@@ -266,13 +268,13 @@ class SpotifyAPI {
 
     const data = response.data;
 
-    const tracks = data.tracks.items.map((item: any) => this.formatTrack(item));
-
     return {
       id: data.id,
       name: data.name,
-      tracks: tracks,
       total: data.total,
+      images: data.images as Image[],
+      artists: data.artists.map((a: any) => this.formatArtist(a)),
+      platform: "spotify",
     };
   }
 
@@ -313,14 +315,14 @@ class SpotifyAPI {
         };
       case "album":
         const album = await this.getAlbum(parsed.id);
-        return { tracks: album.tracks, isPlaylist: true, name: album.name };
+        return { isPlaylist: true, name: album.name };
       default:
         return null;
     }
   }
 
-  formatSearchResults(data: any, types: string[]): SpotifySearchResults {
-    const results: SpotifySearchResults = {
+  formatSearchResults(data: any, types: string[]): SearchResults {
+    const results: SearchResults = {
       tracksTotal: data.tracks?.total || 0,
       albumsTotal: data.albums?.total || 0,
       artistsTotal: data.artists?.total || 0,
@@ -349,8 +351,9 @@ class SpotifyAPI {
     return results;
   }
 
-  formatTrack(item: any): FormattedTrack {
+  formatTrack(item: any): Track {
     return {
+      id: item.id,
       title: item.name,
       artist: item.artists.map((a: any) => a.name).join(", "),
       album: item?.album?.name,
@@ -358,25 +361,29 @@ class SpotifyAPI {
       url:
         item.external_urls?.spotify ||
         `https://open.spotify.com/track/${item.id}`,
-      thumbnail: item?.album?.images?.[0]?.url || null,
-      id: item.id,
+      images: item?.album?.images || [],
+      platform: "spotify",
     };
   }
 
-  formatAlbum(item: any): SpotifyAlbum {
+  formatAlbum(item: any): Album {
     return {
       id: item.id,
       name: item.name,
-      images: item.images as SpotifyImage[],
+      images: item.images as Image[],
       artists: item.artists.map((a: any) => this.formatArtist(a)),
+      total: item.total_tracks,
+      platform: "spotify",
     };
   }
 
-  formatArtist(item: any): SpotifyArtist {
+  formatArtist(item: any): Artist {
     return {
       id: item.id,
       name: item.name,
-      external_urls: item.external_urls,
+      url: item.external_urls?.spotify || `https://open.spotify.com/artist/${item.id}`,
+      platform: "spotify",
+      images: item.images as Image[],
     };
   }
 }

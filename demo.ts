@@ -38,6 +38,6 @@ async function demoLyrics() {
   }
 }
 
-demoLyrics();
+// demoLyrics();
 
-demoSpotify();
+// demoSpotify();

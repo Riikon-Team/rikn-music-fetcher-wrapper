@@ -5,7 +5,7 @@ import type {
   LrclibLyricsResponse,
 } from "../types/lyrics.type";
 
-const LRCLIB_API_URL = "https://lrclib.net/api";
+import { LRCLIB_API_URL } from "../constants/lyrics.contants";
 
 class LyricsAPI {
   private baseUrl = LRCLIB_API_URL;

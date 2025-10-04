@@ -3,24 +3,23 @@ import LyricsAPI from './providers/lyrics';
 
 import type {
     Lyrics,
+    LrclibLyricsResponse,
+    SyncedLyrics
+    
 } from "./types/lyrics.type";
 
 import type {
-    FormattedTrack,
-    FormattedPlaylist,
-    FormattedTrackSearchResults
-} from "./types/index";
+    Image,
+    Track,
+    Album,
+    Artist,
+    Playlist,
+    SearchResults
+} from "./types/music.type"
 
 import type {
-    SpotifyTrack,
-    SpotifyArtist,
-    SpotifyAlbum,
-    SpotifyImage,
-    SpotifySearchResponse,
-    SpotifyPlaylist,
-    FormattedAlbum
+    SpotifyAPIConfig
 } from "./types/spotify.type";
-
 
 export { 
     SpotifyAPI,
@@ -29,14 +28,15 @@ export {
 
 export type {
     Lyrics,
-    FormattedTrack,
-    FormattedPlaylist,
-    FormattedTrackSearchResults,
-    SpotifyTrack,
-    SpotifyArtist,
-    SpotifyAlbum,
-    SpotifyImage,
-    SpotifySearchResponse,
-    SpotifyPlaylist,
-    FormattedAlbum
+    LrclibLyricsResponse,
+    SyncedLyrics,
+    // music types
+    Image,
+    Track,
+    Album,
+    Artist,
+    Playlist,
+    SearchResults,
+    // config types
+    SpotifyAPIConfig
 };
