@@ -324,5 +324,4 @@ Get readable stream for audio (YouTube only).
 Fetch lyrics from LRCLIB.
 
 ## License
-
-MIT
+GPL-3.0
