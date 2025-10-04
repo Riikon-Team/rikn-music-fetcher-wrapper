@@ -60,11 +60,12 @@
   },
   "homepage": "https://github.com/Riikon-Team/rikn-music-fetcher-wrapper#readme",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Riikon-Team/rikn-music-fetcher-wrapper.git"},
+    "url": "git+https://github.com/Riikon-Team/rikn-music-fetcher-wrapper.git"
+  },
   "files": [
     "dist",
     "bin",
