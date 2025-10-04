@@ -9,7 +9,7 @@ export type Track = {
     title: string;
     artist: string;
     album: string;
-    duration: number;
+    duration: number | null;
     url: string;
     images: Image[];
     platform: string;
@@ -22,6 +22,7 @@ export type Album = {
     images: Image[];
     artists: Artist[] | string[] | null;
     platform: string;
+    playlistId?: string; // ID of the playlist if this album is part of a playlist
 }
 
 export type Artist = {
@@ -39,6 +40,17 @@ export type Playlist = {
     total: number;
     url: string;
     platform: string;
+    images?: Image[];
+}
+
+export type Video = {
+    id: string;
+    name: string;
+    artist: Artist | string | null;
+    url: string;
+    duration: number;
+    images: Image[];
+    platform: string;
 }
 
 export type SearchResults = {
@@ -46,8 +58,10 @@ export type SearchResults = {
     albumsTotal: number;
     artistsTotal: number;
     playlistsTotal: number;
+    videosTotal: number;
     tracks: Track[];
     albums: Album[];
     artists: Artist[];
     playlists: Playlist[];
+    videos: Video[];
 }

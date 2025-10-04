@@ -323,6 +323,7 @@ class SpotifyAPI {
 
   formatSearchResults(data: any, types: string[]): SearchResults {
     const results: SearchResults = {
+      videosTotal: 0,
       tracksTotal: data.tracks?.total || 0,
       albumsTotal: data.albums?.total || 0,
       artistsTotal: data.artists?.total || 0,
@@ -331,6 +332,7 @@ class SpotifyAPI {
       albums: [],
       artists: [],
       playlists: [],
+      videos: [],
     };
 
     if (types.includes(SpotifySearchType.TRACKS) && data.tracks) {
@@ -347,6 +349,12 @@ class SpotifyAPI {
       results.artists = data.artists.items.map((item: any) =>
         this.formatArtist(item)
       );
+    }
+
+    if (types.includes(SpotifySearchType.PLAYLISTS) && data.playlists) {
+      results.playlists = data.playlists.items.map((item: any) => (
+        this.formatPlaylist(item)
+      ));
     }
     return results;
   }
@@ -384,6 +392,20 @@ class SpotifyAPI {
       url: item.external_urls?.spotify || `https://open.spotify.com/artist/${item.id}`,
       platform: "spotify",
       images: item.images as Image[],
+    };
+  }
+
+  formatPlaylist(item: any): Playlist {
+    return {
+      tracks: [],
+      id: item.id,
+      name: item.name,
+      total: item.tracks?.total || 0,
+      images: item.images as Image[],
+      url:
+        item.external_urls?.spotify ||
+        `https://open.spotify.com/playlist/${item.id}`,
+      platform: "spotify",
     };
   }
 }

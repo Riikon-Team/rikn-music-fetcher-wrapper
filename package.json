@@ -1,12 +1,16 @@
 {
   "name": "rikn-music-fetcher",
   "version": "1.0.0",
-  "description": "A TypeScript wrapper for Discord bots, unifying music fetching from YouTube, SoundCloud, Spotify with ytmusic-api, yt-dlp, lrclib. Robust fallback & link parsing for reliable music search, download, streaming.",
-  "main": "index.js",
+  "description": "A TypeScript wrapper for Discord bots, unifying music fetching from YouTube, SoundCloud (comming soon), Spotify with ytmusic-api, yt-dlp, lrclib. Robust fallback & link parsing for reliable music search, download, streaming.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "test": "node --experimental-vm-modules node_modules/.bin/jest",
-    "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch",
-    "test:coverage": "node --experimental-vm-modules node_modules/.bin/jest --coverage"
+    "dev": "tsx src/index.ts",
+    "build:types": "tsc --emitDeclarationOnly --pretty",
+    "build:bundle": "node ./scripts/build-esbuild.js",
+    "build": "npm run build:types && npm run build:bundle",
+    "start": "node dist/index.js",
+    "clean": "rm -rf dist"
   },
   "keywords": [
     "music-fetcher",
@@ -26,12 +30,13 @@
     "fallback-music"
   ],
   "author": "Riikon Team",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "type": "module",
   "devDependencies": {
     "@jest/globals": "^30.2.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.6.2",
+    "esbuild": "^0.25.10",
     "jest": "^30.2.0",
     "ts-jest": "^29.4.4",
     "typescript": "^5.9.3"
@@ -39,6 +44,20 @@
   "dependencies": {
     "@types/node-fetch": "^2.6.13",
     "axios": "^1.12.2",
-    "node-fetch": "^3.3.2"
-  }
+    "node-fetch": "^3.3.2",
+    "ytmusic-api": "^5.3.0"
+  },
+  "bugs": {
+    "url": "https://github.com/Riikon-Team/rikn-music-fetcher-wrapper/issues"
+  },
+  "homepage": "https://github.com/Riikon-Team/rikn-music-fetcher-wrapper#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ]
 }

@@ -1,42 +1,36 @@
-import SpotifyAPI from './providers/spotify';
-import LyricsAPI from './providers/lyrics';
+// Main exports
+export { RiknClient, type RiknClientConfig, type SongWithStream, type Platform } from "./RiknClient";
 
-import type {
-    Lyrics,
-    LrclibLyricsResponse,
-    SyncedLyrics
-    
+// Provider exports (nếu user muốn dùng trực tiếp)
+export { default as SpotifyAPI } from "./providers/spotify";
+export { default as YTApi } from "./providers/youtube";
+export { default as LyricsAPI } from "./providers/lyrics";
+export { default as YTDLP } from "./providers/yt-dlp";
+
+// Type exports
+export type { SpotifyAPIConfig } from "./types/spotify.type";
+export type { YTMusicOption, YTDLPOption, YTApiOptions } from "./types/yt.type";
+export type {
+  Track,
+  Album,
+  Artist,
+  Playlist,
+  Video,
+  SearchResults,
+  Image
+} from "./types/music.type";
+export type {
+  Lyrics,
+  SyncedLyrics,
+  LrclibLyricsResponse
 } from "./types/lyrics.type";
 
-import type {
-    Image,
-    Track,
-    Album,
-    Artist,
-    Playlist,
-    SearchResults
-} from "./types/music.type"
+// Constant exports
+export { YTSearchType } from "./constants/yt.contants";
+export { SpotifySearchType } from "./constants/spotify.constants";
 
-import type {
-    SpotifyAPIConfig
-} from "./types/spotify.type";
+// Utility exports
+export * from "./core/utils";
 
-export { 
-    SpotifyAPI,
-    LyricsAPI
-};
-
-export type {
-    Lyrics,
-    LrclibLyricsResponse,
-    SyncedLyrics,
-    // music types
-    Image,
-    Track,
-    Album,
-    Artist,
-    Playlist,
-    SearchResults,
-    // config types
-    SpotifyAPIConfig
-};
+// Default export
+export { RiknClient as default } from "./RiknClient";
