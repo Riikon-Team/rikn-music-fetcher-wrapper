@@ -18,10 +18,23 @@ async function copyBin() {
 
 (async () => {
   try {
-    const external = [
+    const builtins = Array.from(new Set([
       ...builtinModules,
+      ...builtinModules.map((m) => `node:${m}`)
+    ]));
+
+    const external = [
+      ...builtins,
       "form-data",
       "combined-stream",
+      "proxy-from-env",
+      "follow-redirects",
+      "encoding",
+      "iconv-lite",
+      "tough-cookie",
+      "url",
+      "net",
+      "fs",
     ];
 
     await build({
