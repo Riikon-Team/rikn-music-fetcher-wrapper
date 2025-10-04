@@ -1,17 +1,25 @@
-## Mục tiêu PR này
-<!-- Mô tả thay đổi và lý do -->
+# Purpose of this PR
+
+<!-- Description of changes and reasons -->
 
 ## Checklist
-- [ ] Đã test đầy đủ
-- [ ] Không có lỗi CI/CD
-- [ ] Đã cập nhật mã nguồn
-- [ ] Đã cập nhật tài liệu 
+- [ ] Fully tested
+- [ ] No CI/CD errors
+- [ ] Source code updated
+- [ ] Documentation updated
 
-## Liên kết liên quan
-<!-- Liên kết đến issue hoặc pull request liên quan -->
+## Related Links
 
-## Hướng dẫn kiểm tra
-<!-- Hướng dẫn để kiểm tra PR này -->
+<!-- Links to related issues or pull requests -->
 
-## Ghi chú
-<!-- Bất kỳ ghi chú nào cần thiết cho người review -->
+## Testing Instructions
+
+<!-- Instructions for testing this PR -->
+Please checkout this branch and run the tests:
+```bash
+npm test
+```
+
+## Notes
+
+<!-- Any notes necessary for the reviewer -->
