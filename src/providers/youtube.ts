@@ -12,7 +12,7 @@ import type {
     SearchResults
 } from "../types/music.type.ts";
 import { YTSearchType } from "../constants/yt.contants";
-import fs from "fs";
+import { getCookiesContentFromNetscapeCookieFile } from "../core/utils";
 
 class YTApi {
     private client: YTMusic;
@@ -27,20 +27,11 @@ class YTApi {
         if (this.isInitialized) return;
 
         await this.client.initialize({
-            cookies: this.options?.cookiesPath ? YTApi.getCookiesContentFromNetscapeCookieFile(this.options.cookiesPath) : undefined,
+            cookies: this.options?.cookiesPath ? getCookiesContentFromNetscapeCookieFile(this.options.cookiesPath) : undefined,
             GL: this.options?.GL,
             HL: this.options?.HL,
         });
         this.isInitialized = true;
-    }
-
-    static getCookiesContentFromNetscapeCookieFile(cookieFilePath: string): string {
-        if (!fs.existsSync(cookieFilePath)) {
-            console.warn(`Cookie file not found at path: ${cookieFilePath}`);
-            return "";
-        }
-        const content = fs.readFileSync(cookieFilePath, { encoding: "utf-8" });
-        return content;
     }
 
     async searchAllType(query: string): Promise<SearchResults[]> {
@@ -182,9 +173,10 @@ class YTApi {
     }
 
     async formatTrack(track: Object | any): Promise<Track> {
+        console.log(track);
         return {
             album: track.album?.name || "",
-            artist: track.artists?.name || "",
+            artist: track.artist?.name || "",
             duration: track.duration || NaN,
             id: track.videoId || "",
             images: track.thumbnails || [],
@@ -200,7 +192,7 @@ class YTApi {
             name: album.name || "",
             total: album.trackCount || 0,
             images: album.thumbnails || [],
-            artists: album.artists?.name || "",
+            artists: album.artist?.name || "",
             platform: "youtube",
             playlistId: album.playlistId || undefined,
         }

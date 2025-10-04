@@ -35,9 +35,6 @@ export class RiknClient {
     this.ytdlp = new YTDLP(config.ytdlp);
   }
 
-  /**
-   * Tìm kiếm bài hát theo platform
-   */
   async searchSong(query: string, platform: Platform = "youtube"): Promise<Track[]> {
     if (platform === "spotify") {
       if (!this.spotify) {
@@ -51,9 +48,6 @@ export class RiknClient {
     return (results as Track[]) || [];
   }
 
-  /**
-   * Tìm bài đầu tiên và lấy stream URL
-   */
   async searchFirstAndStream(query: string): Promise<SongWithStream | null> {
     const tracks = await this.searchSong(query, "youtube");
     if (!tracks || tracks.length === 0) {
@@ -75,13 +69,9 @@ export class RiknClient {
     }
   }
 
-  /**
-   * Lấy thông tin bài hát từ URL
-   */
   async getSongByUrl(url: string, withStreamUrl: boolean = false): Promise<SongWithStream | null> {
     if (!url) return null;
 
-    // Xác định platform
     const platform = this.detectPlatform(url);
     
     if (platform === "spotify") {
@@ -95,9 +85,6 @@ export class RiknClient {
     return null;
   }
 
-  /**
-   * Lấy danh sách bài hát từ playlist URL
-   */
   async getSongsByPlaylist(url: string): Promise<Track[]> {
     if (!url) return [];
 
@@ -130,14 +117,10 @@ export class RiknClient {
     return [];
   }
 
-  /**
-   * Lấy stream URL từ URL bài hát
-   */
   async getStreamUrlByUrl(url: string): Promise<string> {
     const platform = this.detectPlatform(url);
     
     if (platform === "youtube") {
-      // YouTube: Lấy ID và get direct URL
       const videoId = extractYoutubeVideoId(url);
       if (!videoId) {
         throw new Error("Invalid YouTube URL");
@@ -148,13 +131,11 @@ export class RiknClient {
     }
     
     if (platform === "spotify") {
-      // Spotify: Lấy thông tin bài hát -> Tìm trên YouTube -> Lấy stream URL
       const track = await this.getSongByUrl(url, false);
       if (!track) {
         throw new Error("Track not found on Spotify");
       }
       
-      // Tìm trên YouTube với query "artist - title"
       const searchQuery = `${track.artist} - ${track.title}`;
       const ytTracks = await this.searchSong(searchQuery, "youtube");
       
@@ -162,7 +143,6 @@ export class RiknClient {
         throw new Error("No YouTube equivalent found");
       }
       
-      // Lấy stream URL của bài đầu tiên
       const firstTrack = ytTracks[0];
       return await this.ytdlp.getDirectAudioUrl(firstTrack.id, {
         additionalArgs: ["--force-ipv4"]
@@ -172,20 +152,15 @@ export class RiknClient {
     throw new Error("Unsupported platform");
   }
 
-  /**
-   * Stream bài hát từ URL (chỉ hỗ trợ YouTube)
-   */
   async streamSongByUrl(url: string): Promise<NodeJS.ReadableStream> {
     const platform = this.detectPlatform(url);
     
     if (platform === "spotify") {
-      // Spotify -> Tìm trên YouTube -> Stream
       const track = await this.getSongByUrl(url, false);
       if (!track) {
         throw new Error("Track not found on Spotify");
       }
       
-      // Tìm trên YouTube
       const searchQuery = `${track.artist} - ${track.title}`;
       const ytTracks = await this.searchSong(searchQuery, "youtube");
       
@@ -212,9 +187,6 @@ export class RiknClient {
     throw new Error("Unsupported platform for streaming");
   }
 
-  /**
-   * Lấy lời bài hát
-   */
   async getLyrics(
     trackName: string,
     artistName: string,
@@ -224,9 +196,6 @@ export class RiknClient {
     return await this.lyrics.getLyrics(trackName, artistName, albumName, duration);
   }
 
-  /**
-   * Tìm kiếm lời bài hát
-   */
   async searchLyrics(
     trackName: string,
     artistName: string,
@@ -235,7 +204,6 @@ export class RiknClient {
     return await this.lyrics.search(trackName, artistName, albumName);
   }
 
-  // --- Private Helper Methods ---
 
   private detectPlatform(url: string): Platform | null {
     if (url.includes("spotify.com")) return "spotify";
@@ -261,7 +229,6 @@ export class RiknClient {
       return track;
     }
 
-    // Tìm trên YouTube để lấy stream
     const searchQuery = `${track.artist} - ${track.title}`;
     const ytTracks = await this.searchSong(searchQuery, "youtube");
     
@@ -289,7 +256,6 @@ export class RiknClient {
       return null;
     }
 
-    // Thử getVideo trước (hỗ trợ cả video & track)
     let track: Track | null = null;
     try {
       const video = await this.ytmusic.getVideo(videoId);
@@ -306,7 +272,6 @@ export class RiknClient {
         };
       }
     } catch (error) {
-      // Fallback to getTrack
       try {
         track = await this.ytmusic.getTrack(videoId);
       } catch (trackError) {
