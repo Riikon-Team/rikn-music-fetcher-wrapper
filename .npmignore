@@ -1,0 +1,32 @@
+# Source files
+src/
+tests/
+demo.ts
+*.ts
+!dist/**/*.d.ts
+
+# Config files
+tsconfig.json
+.eslintrc*
+.prettierrc*
+
+# Development
+node_modules/
+.vscode/
+.idea/
+*.log
+npm-debug.log*
+
+# Test files
+coverage/
+.nyc_output/
+
+# Git
+.git/
+.gitignore
+.github/
+
+# Sensitive
+cookies*.txt
+.env
+.env.*

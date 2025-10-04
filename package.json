@@ -1,0 +1,75 @@
+{
+  "name": "rikn-music-fetcher",
+  "version": "1.0.0",
+  "description": "A TypeScript wrapper for Discord bots, unifying music fetching from YouTube, SoundCloud (comming soon), Spotify with ytmusic-api, yt-dlp, lrclib. Robust fallback & link parsing for reliable music search, download, streaming.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build:types": "tsc --emitDeclarationOnly --pretty",
+    "build:bundle": "node ./scripts/build-esbuild.js",
+    "build": "npm run build:types && npm run build:bundle",
+    "prepublishOnly": "npm run build",
+    "start": "node dist/index.js",
+    "clean": "rm -rf dist",
+    "prepare": "npm run build",
+    "release": "semantic-release"
+  },
+  "keywords": [
+    "music-fetcher",
+    "youtube-api",
+    "soundcloud-downloader",
+    "spotify-parser",
+    "music-downloader",
+    "audio-stream",
+    "lyrics-api",
+    "yt-dlp-wrapper",
+    "multi-source-music",
+    "robust-api",
+    "typescript-library",
+    "npm-music",
+    "song-search",
+    "track-fetch",
+    "fallback-music"
+  ],
+  "author": "Riikon Team",
+  "license": "GPL-3.0",
+  "type": "module",
+  "devDependencies": {
+    "@jest/globals": "^30.2.0",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/github": "^11.0.6",
+    "@semantic-release/npm": "^12.0.2",
+    "@semantic-release/release-notes-generator": "^14.1.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.6.2",
+    "esbuild": "^0.25.10",
+    "jest": "^30.2.0",
+    "semantic-release": "^24.2.9",
+    "ts-jest": "^29.4.4",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@types/node-fetch": "^2.6.13",
+    "axios": "^1.12.2",
+    "node-fetch": "^3.3.2",
+    "ytmusic-api": "^5.3.0"
+  },
+  "bugs": {
+    "url": "https://github.com/Riikon-Team/rikn-music-fetcher-wrapper/issues"
+  },
+  "homepage": "https://github.com/Riikon-Team/rikn-music-fetcher-wrapper#readme",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Riikon-Team/rikn-music-fetcher-wrapper.git"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ]
+}
