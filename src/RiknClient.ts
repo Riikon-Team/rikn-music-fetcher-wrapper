@@ -35,14 +35,19 @@ export class RiknClient {
     this.ytdlp = new YTDLP(config.ytdlp);
   }
 
-  async searchSong(query: string, platform: Platform = "youtube"): Promise<Track[]> {
+  async searchSong(
+    query: string,
+    platform: Platform = "youtube"
+  ): Promise<Track[]> {
     if (platform === "spotify") {
       if (!this.spotify) {
-        throw new Error("Spotify client not initialized. Please provide Spotify credentials.");
+        throw new Error(
+          "Spotify client not initialized. Please provide Spotify credentials."
+        );
       }
       return await this.spotify.searchTracks(query);
     }
-    
+
     // Default: YouTube Music
     const results = await this.ytmusic.search(query, "TRACK");
     return (results as Track[]) || [];
@@ -57,11 +62,11 @@ export class RiknClient {
     const firstTrack = tracks[0];
     try {
       const streamUrl = await this.ytdlp.getDirectAudioUrl(firstTrack.id, {
-        additionalArgs: ["--force-ipv4"]
+        additionalArgs: ["--force-ipv4"],
       });
       return {
         ...firstTrack,
-        streamUrl
+        streamUrl,
       };
     } catch (error) {
       console.error("Failed to get stream URL:", error);
@@ -69,15 +74,18 @@ export class RiknClient {
     }
   }
 
-  async getSongByUrl(url: string, withStreamUrl: boolean = false): Promise<SongWithStream | null> {
+  async getSongByUrl(
+    url: string,
+    withStreamUrl = false
+  ): Promise<SongWithStream | null> {
     if (!url) return null;
 
     const platform = this.detectPlatform(url);
-    
+
     if (platform === "spotify") {
       return await this.getSpotifySongByUrl(url, withStreamUrl);
     }
-    
+
     if (platform === "youtube") {
       return await this.getYoutubeSongByUrl(url, withStreamUrl);
     }
@@ -89,7 +97,7 @@ export class RiknClient {
     if (!url) return [];
 
     const platform = this.detectPlatform(url);
-    
+
     if (platform === "spotify") {
       if (!this.spotify) {
         throw new Error("Spotify client not initialized");
@@ -101,11 +109,10 @@ export class RiknClient {
       }
       if (parsed?.type === "album") {
         const album = await this.spotify.getAlbum(parsed.id);
-        // Album không có tracks direct, cần fetch từng track
         return [];
       }
     }
-    
+
     if (platform === "youtube") {
       const playlistId = extractYoutubePlaylistId(url);
       if (playlistId) {
@@ -119,33 +126,33 @@ export class RiknClient {
 
   async getStreamUrlByUrl(url: string): Promise<string> {
     const platform = this.detectPlatform(url);
-    
+
     if (platform === "youtube") {
       const videoId = extractYoutubeVideoId(url);
       if (!videoId) {
         throw new Error("Invalid YouTube URL");
       }
       return await this.ytdlp.getDirectAudioUrl(videoId, {
-        additionalArgs: ["--force-ipv4"]
+        additionalArgs: ["--force-ipv4"],
       });
     }
-    
+
     if (platform === "spotify") {
       const track = await this.getSongByUrl(url, false);
       if (!track) {
         throw new Error("Track not found on Spotify");
       }
-      
+
       const searchQuery = `${track.artist} - ${track.title}`;
       const ytTracks = await this.searchSong(searchQuery, "youtube");
-      
+
       if (!ytTracks || ytTracks.length === 0) {
         throw new Error("No YouTube equivalent found");
       }
-      
+
       const firstTrack = ytTracks[0];
       return await this.ytdlp.getDirectAudioUrl(firstTrack.id, {
-        additionalArgs: ["--force-ipv4"]
+        additionalArgs: ["--force-ipv4"],
       });
     }
 
@@ -154,33 +161,33 @@ export class RiknClient {
 
   async streamSongByUrl(url: string): Promise<NodeJS.ReadableStream> {
     const platform = this.detectPlatform(url);
-    
+
     if (platform === "spotify") {
       const track = await this.getSongByUrl(url, false);
       if (!track) {
         throw new Error("Track not found on Spotify");
       }
-      
+
       const searchQuery = `${track.artist} - ${track.title}`;
       const ytTracks = await this.searchSong(searchQuery, "youtube");
-      
+
       if (!ytTracks || ytTracks.length === 0) {
         throw new Error("No YouTube equivalent found");
       }
-      
+
       const ytTrack = ytTracks[0];
       return await this.ytdlp.streamAudio(ytTrack.id, {
-        additionalArgs: ["--force-ipv4"]
+        additionalArgs: ["--force-ipv4"],
       });
     }
-    
+
     if (platform === "youtube") {
       const videoId = extractYoutubeVideoId(url);
       if (!videoId) {
         throw new Error("Invalid YouTube URL");
       }
       return await this.ytdlp.streamAudio(videoId, {
-        additionalArgs: ["--force-ipv4"]
+        additionalArgs: ["--force-ipv4"],
       });
     }
 
@@ -193,7 +200,12 @@ export class RiknClient {
     albumName?: string,
     duration?: number
   ): Promise<Lyrics | null> {
-    return await this.lyrics.getLyrics(trackName, artistName, albumName, duration);
+    return await this.lyrics.getLyrics(
+      trackName,
+      artistName,
+      albumName,
+      duration
+    );
   }
 
   async searchLyrics(
@@ -204,16 +216,22 @@ export class RiknClient {
     return await this.lyrics.search(trackName, artistName, albumName);
   }
 
-
   private detectPlatform(url: string): Platform | null {
     if (url.includes("spotify.com")) return "spotify";
-    if (url.includes("youtube.com") || url.includes("youtu.be") || url.includes("music.youtube.com")) {
+    if (
+      url.includes("youtube.com") ||
+      url.includes("youtu.be") ||
+      url.includes("music.youtube.com")
+    ) {
       return "youtube";
     }
     return null;
   }
 
-  private async getSpotifySongByUrl(url: string, withStreamUrl: boolean): Promise<SongWithStream | null> {
+  private async getSpotifySongByUrl(
+    url: string,
+    withStreamUrl: boolean
+  ): Promise<SongWithStream | null> {
     if (!this.spotify) {
       throw new Error("Spotify client not initialized");
     }
@@ -224,23 +242,23 @@ export class RiknClient {
     }
 
     const track = await this.spotify.getTrack(parsed.id);
-    
+
     if (!withStreamUrl) {
       return track;
     }
 
     const searchQuery = `${track.artist} - ${track.title}`;
     const ytTracks = await this.searchSong(searchQuery, "youtube");
-    
+
     if (ytTracks && ytTracks.length > 0) {
       const ytTrack = ytTracks[0];
       try {
         const streamUrl = await this.ytdlp.getDirectAudioUrl(ytTrack.id, {
-        additionalArgs: ["--force-ipv4"]
-      });
+          additionalArgs: ["--force-ipv4"],
+        });
         return {
           ...track,
-          streamUrl
+          streamUrl,
         };
       } catch (error) {
         console.error("Failed to get stream URL:", error);
@@ -250,7 +268,10 @@ export class RiknClient {
     return track;
   }
 
-  private async getYoutubeSongByUrl(url: string, withStreamUrl: boolean): Promise<SongWithStream | null> {
+  private async getYoutubeSongByUrl(
+    url: string,
+    withStreamUrl: boolean
+  ): Promise<SongWithStream | null> {
     const videoId = extractYoutubeVideoId(url);
     if (!videoId) {
       return null;
@@ -263,12 +284,15 @@ export class RiknClient {
         track = {
           id: video.id,
           title: video.name,
-          artist: typeof video.artist === 'string' ? video.artist : video.artist?.name || "",
+          artist:
+            typeof video.artist === "string"
+              ? video.artist
+              : video.artist?.name || "",
           album: "",
           duration: video.duration,
           url: video.url,
           images: video.images,
-          platform: "youtube"
+          platform: "youtube",
         };
       }
     } catch (error) {
@@ -289,19 +313,17 @@ export class RiknClient {
 
     try {
       const streamUrl = await this.ytdlp.getDirectAudioUrl(videoId, {
-        additionalArgs: ["--force-ipv4"]
+        additionalArgs: ["--force-ipv4"],
       });
       return {
         ...track,
-        streamUrl
+        streamUrl,
       };
     } catch (error) {
       console.error("Failed to get stream URL:", error);
       return track;
     }
   }
-
-
 }
 
 export default RiknClient;
