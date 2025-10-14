@@ -62,7 +62,7 @@ class YTApi {
                 results.artists.push(await this.formatArtist(item));
             }
             if (item.type === YTSearchType.Playlist) {
-                results.playlists.push(await this.formatPlaylist(item));
+                results.playlists.push(await this.formatPlaylist(item, []));
             }
             if (item.type === YTSearchType.Video) {
                 results.videos.push(await this.formatVideo(item));
@@ -109,7 +109,7 @@ class YTApi {
             const results = await this.client.searchPlaylists(query);
             const playlists: Playlist[] = [];
             for (const item of results) {
-                playlists.push(await this.formatPlaylist(item));
+                playlists.push(await this.formatPlaylist(item, []));
             }
             return playlists;
         }
@@ -149,9 +149,10 @@ class YTApi {
             await this.initialize();
         }
         const playlist = await this.client.getPlaylistVideos(browseId);
+        const playlistInfo = await this.client.getPlaylist(browseId);
         if (!playlist) return null;
-        console.log(playlist);
-        return this.formatPlaylist(playlist);
+        // console.log(playlistInfo);
+        return await this.formatPlaylist(playlist, playlistInfo);
     }
 
     async getVideo(videoId: string): Promise<Video | null> {
@@ -173,7 +174,6 @@ class YTApi {
     }
 
     async formatTrack(track: Object | any): Promise<Track> {
-        console.log(track);
         return {
             album: track.album?.name || "",
             artist: track.artist?.name || "",
@@ -198,12 +198,16 @@ class YTApi {
         }
     }
 
-    async formatPlaylist(playlist: Object | any): Promise<Playlist> {
+    async formatPlaylist(playlist: Object | any, playlistInfo: Object | any): Promise<Playlist> {
+        const tracks: Track[] = [];
+        for (const item of playlist) {
+            tracks.push(await this.formatTrack(item));
+        }
         return {
-            id: playlist.playlistId || "",
-            name: playlist.name || "",
-            tracks: [],
-            total: playlist.videoCount || 0,
+            id: playlistInfo?.playlistId || "",
+            name: playlistInfo?.name || playlistInfo?.title || "",
+            tracks: tracks,
+            total: playlistInfo?.videoCount || playlistInfo?.count || 0,
             images: playlist.thumbnails || [],
             platform: "youtube",
             url: `https://www.youtube.com/playlist?list=${playlist.playlistId || ""}`,
@@ -214,7 +218,7 @@ class YTApi {
         return {
             id: video.videoId || "",
             name: video.name || "",
-            artist: video.author?.name || null,
+            artist: video.author?.name || video.artist?.name || "",
             duration: video.duration || NaN,
             images: video.thumbnails || [],
             platform: "youtube",
