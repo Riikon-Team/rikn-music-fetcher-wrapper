@@ -13,6 +13,7 @@ export type Track = {
     url: string;
     images: Image[];
     platform: string;
+
 }
 
 export type Album = {

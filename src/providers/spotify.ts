@@ -1,7 +1,5 @@
 import axios, { AxiosInstance } from "axios";
-import type {
-  SpotifyAPIConfig,
-} from "../types/spotify.type";
+import type { SpotifyAPIConfig, OembedResponse } from "../types/spotify.type";
 
 import type {
   Album,
@@ -9,7 +7,7 @@ import type {
   Playlist,
   Track,
   SearchResults,
-  Image
+  Image,
 } from "../types/music.type";
 
 import {
@@ -154,12 +152,15 @@ class SpotifyAPI {
       offset: offset.toString(),
     });
 
-    const r = await this.client.get(`/search?${searchParams.toString()}`);
-    if (r.status !== 200) {
-      throw new Error(`Spotify Search Error: ${r.statusText}`);
+    try {
+      const r = await this.client.get(`/search?${searchParams.toString()}`);
+      if (r.status !== 200) {
+        throw new Error(`Spotify Search Error: ${r.statusText}`);
+      }
+      return this.formatSearchResults(r.data, types);
+    } catch (error: Error | any) {
+      throw new Error(`Spotify Search Error: ${error.message}`);
     }
-
-    return this.formatSearchResults(r.data, types);
   }
 
   async searchTracks(
@@ -227,58 +228,158 @@ class SpotifyAPI {
   }
 
   async getTrack(trackId: string): Promise<Track> {
-    const r = await this.client.get(`/tracks/${trackId}`);
-    if (r.status !== 200) {
-      throw new Error(`Spotify Track Error: ${r.statusText}`);
-    }
+    try {
+      const r = await this.client.get(`/tracks/${trackId}`);
+      if (r.status !== 200) {
+        throw new Error(`Spotify Track Error: ${r.statusText}`);
+      }
 
-    const data = r.data;
-    return this.formatTrack(data);
+      const data = r.data;
+      return this.formatTrack(data);
+    } catch (error: Error | any) {
+      throw new Error(`Spotify Track Error: ${error.message}`);
+    }
   }
 
   async getPlaylist(playlistId: string): Promise<Playlist> {
-    const r = await this.client.get(`/playlists/${playlistId}`);
-    if (r.status !== 200) {
-      throw new Error(`Spotify Playlist Error: ${r.statusText}`);
+    try {
+      const r = await this.client.get(`/playlists/${playlistId}`);
+      if (r.status !== 200) {
+        throw new Error(`Spotify Playlist Error: ${r.statusText}`);
+      }
+
+      const data = r.data;
+
+      const tracks = data.tracks.items.map((item: any) =>
+        this.formatTrack(item.track)
+      );
+
+      return {
+        id: data.id,
+        name: data.name,
+        total: data.tracks.total,
+        tracks: tracks,
+        url:
+          data.external_urls?.spotify ||
+          `https://open.spotify.com/playlist/${data.id}`,
+        platform: "spotify",
+      };
+    } catch (error: Error | any) {
+      throw new Error(`Spotify Playlist Error: ${error.message}`);
     }
-
-    const data = r.data;
-
-    const tracks = data.tracks.items.map((item: any) =>
-      this.formatTrack(item.track)
-    );
-
-    return {
-      id: data.id,
-      name: data.name,
-      total: data.tracks.total,
-      tracks: tracks,
-      url: data.external_urls?.spotify || `https://open.spotify.com/playlist/${data.id}`,
-      platform: "spotify",
-    };
   }
 
   async getAlbum(albumId: string): Promise<Album> {
-    const r = await this.client.get(`/albums/${albumId}`);
-    const response = r;
+    try {
+      const r = await this.client.get(`/albums/${albumId}`);
+      const response = r;
 
-    if (response.status !== 200) {
-      throw new Error(`Spotify Album Error: ${response.statusText}`);
+      if (response.status !== 200) {
+        throw new Error(`Spotify Album Error: ${response.statusText}`);
+      }
+
+      const data = response.data;
+
+      return {
+        id: data.id,
+        name: data.name,
+        total: data.total,
+        images: data.images as Image[],
+        artists: data.artists.map((a: any) => this.formatArtist(a)),
+        platform: "spotify",
+      };
+    } catch (error: Error | any) {
+      throw new Error(`Spotify Album Error: ${error.message}`);
     }
-
-    const data = response.data;
-
-    return {
-      id: data.id,
-      name: data.name,
-      total: data.total,
-      images: data.images as Image[],
-      artists: data.artists.map((a: any) => this.formatArtist(a)),
-      platform: "spotify",
-    };
   }
 
-  parseSpotifyUrl(url: string): { type: "track" | "playlist" | "album"; id: string } | null {
+  async getAlbumTracks(albumId: string): Promise<Track[]> {
+    try {
+      const r = await this.client.get(`/albums/${albumId}/tracks`);
+      if (r.status !== 200) {
+        throw new Error(`Spotify Album Tracks Error: ${r.statusText}`);
+      }
+      const data = r.data;
+      return data.items.map((item: any) => this.formatTrack(item));
+    } catch (error: Error | any) {
+      throw new Error(`Spotify Album Tracks Error: ${error.message}`);
+    }
+  }
+
+  async getOembedData(url: string): Promise<OembedResponse> {
+    try {
+      const r = await axios.get(
+        `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`
+      );
+      if (r.status !== 200) {
+        throw new Error(`Spotify OEmbed Error: ${r.statusText}`);
+      }
+      return r.data;
+    } catch (error: Error | any) {
+      throw new Error(`Spotify OEmbed Error: ${error.message}`);
+    }
+  }
+
+  async getPlaylistBypass(url: string): Promise<Playlist> {
+    const { title, iframe_url, thumbnail_url } = await this.getOembedData(url);
+
+    try {
+      const r = await this.client.get(iframe_url);
+      if (r.status !== 200) {
+        throw new Error(`Spotify Embed Tracks Error: ${r.statusText}`);
+      }
+
+      const html = r.data as string;
+      const jsonMatch = html.match(
+        /<script id="__NEXT_DATA__" type="application\/json">([^<]+)<\/script>/
+      );
+
+      if (!jsonMatch || jsonMatch.length < 2) {
+        throw new Error("Failed to extract JSON data from embed page");
+      }
+
+      const jsonData = JSON.parse(jsonMatch[1]);
+      const id = jsonData?.props?.pageProps?.state?.data?.entity?.uri
+        ?.split(":")
+        .pop();
+      const coverArt =
+        jsonData?.props?.pageProps?.state?.data?.entity?.coverArt?.sources?.[0]
+          ?.url || "";
+      const tracksData =
+        jsonData?.props?.pageProps?.state?.data?.entity?.trackList || [];
+
+      const tracks: Track[] = tracksData.map((item: any) => ({
+        id: item?.uri.split(":").pop(),
+        title: item?.title,
+        artists: item?.subtitle,
+        duration: item?.duration/1000,
+        url: `https://open.spotify.com/track/${item.uri.split(":").pop()}`,
+        platform: "spotify",
+      }));
+
+      return {
+        id: id || "",
+        name: title,
+        tracks: tracks,
+        platform: "spotify",
+        total: tracks.length,
+        url: url,
+        images: [
+          {
+            url: coverArt || thumbnail_url,            
+            width: 640,
+            height: 640,
+          },
+        ],
+      };
+    } catch (error: Error | any) {
+      throw new Error(`Spotify Embed Tracks Error: ${error.message}`);
+    }
+  }
+
+  parseSpotifyUrl(
+    url: string
+  ): { type: "track" | "playlist" | "album"; id: string } | null {
     const trackMatch = url.match(/track\/([a-zA-Z0-9]+)/);
     const playlistMatch = url.match(/playlist\/([a-zA-Z0-9]+)/);
     const albumMatch = url.match(/album\/([a-zA-Z0-9]+)/);
@@ -352,9 +453,9 @@ class SpotifyAPI {
     }
 
     if (types.includes(SpotifySearchType.PLAYLISTS) && data.playlists) {
-      results.playlists = data.playlists.items.map((item: any) => (
+      results.playlists = data.playlists.items.map((item: any) =>
         this.formatPlaylist(item)
-      ));
+      );
     }
     return results;
   }
@@ -389,7 +490,9 @@ class SpotifyAPI {
     return {
       id: item.id,
       name: item.name,
-      url: item.external_urls?.spotify || `https://open.spotify.com/artist/${item.id}`,
+      url:
+        item.external_urls?.spotify ||
+        `https://open.spotify.com/artist/${item.id}`,
       platform: "spotify",
       images: item.images as Image[],
     };

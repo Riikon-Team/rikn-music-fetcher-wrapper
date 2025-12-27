@@ -54,6 +54,11 @@ export class RiknClient {
   }
 
   async searchFirstAndStream(query: string): Promise<SongWithStream | null> {
+    // Option 1: If the query is a URL, get the song by URL
+    if (query.startsWith("http://") || query.startsWith("https://")) {
+      return await this.getSongByUrl(query, true);
+    }
+    // Option 2: Search for the song and get the first result with stream URL
     const tracks = await this.searchSong(query, "youtube");
     if (!tracks || tracks.length === 0) {
       return null;
@@ -104,12 +109,16 @@ export class RiknClient {
       }
       const parsed = this.spotify.parseSpotifyUrl(url);
       if (parsed?.type === "playlist") {
-        const playlist = await this.spotify.getPlaylist(parsed.id);
+        let playlist = null;
+        try {
+          playlist = await this.spotify.getPlaylist(parsed.id);
+        } catch (error) {
+          playlist = await this.spotify.getPlaylistBypass(url);
+        }
         return playlist.tracks;
       }
       if (parsed?.type === "album") {
-        const album = await this.spotify.getAlbum(parsed.id);
-        return [];
+        return await this.spotify.getAlbumTracks(parsed.id);
       }
     }
 
@@ -192,6 +201,27 @@ export class RiknClient {
     }
 
     throw new Error("Unsupported platform for streaming");
+  }
+
+  async getThumbnailByUrl(url: string): Promise<string | null> {
+    const platform = this.detectPlatform(url);
+
+    if (platform === "spotify") {
+      if (!this.spotify) {
+        throw new Error("Spotify client not initialized");
+      }
+      const parsed = await this.spotify.getOembedData(url);
+      return parsed?.thumbnail_url || null;
+    }
+    if (platform === "youtube") {
+      const videoId = extractYoutubeVideoId(url);
+      if (!videoId) {
+        return null;
+      }
+      const video = await this.ytmusic.getVideo(videoId);
+      return video?.images?.[0]?.url || null;
+    }
+    return null;
   }
 
   async getLyrics(
