@@ -128,10 +128,10 @@ class LyricsAPI {
       if (match) {
         const minutes = parseInt(match[1]);
         const seconds = parseInt(match[2]);
-        const centiseconds = parseInt(match[3].padEnd(3, "0"));
+        const ms = parseInt(match[3].padEnd(3, "0"), 10);
         const text = match[4].trim();
 
-        const timeInMs = (minutes * 60 + seconds) * 1000 + centiseconds * 10;
+        const timeInMs = (minutes * 60 + seconds) * 1000 + ms;
 
         lyrics.push({
           time: timeInMs,
