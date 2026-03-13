@@ -141,3 +141,5 @@ tests/config.ts
 
 demo.ts
 demo2.ts
+
+.env
