@@ -63,7 +63,7 @@ class SpotifyAPI {
           return this.client.request(error.config);
         }
         throw error;
-      }
+      },
     );
 
     this.init();
@@ -81,10 +81,10 @@ class SpotifyAPI {
           Authorization:
             "Basic " +
             Buffer.from(this.clientId + ":" + this.clientSecret).toString(
-              "base64"
+              "base64",
             ),
         },
-      }
+      },
     );
 
     if (r.status !== 200) {
@@ -113,7 +113,7 @@ class SpotifyAPI {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
-      }
+      },
     );
 
     if (r.status !== 200) {
@@ -138,7 +138,7 @@ class SpotifyAPI {
     types: string[] = [SpotifySearchType.TRACKS],
     market: string = SPOTIFY_DEFAULT_MARKET,
     limit: number = 20,
-    offset: number = 0
+    offset: number = 0,
   ): Promise<SearchResults> {
     if (!query) {
       throw new Error("Search query is required");
@@ -167,14 +167,14 @@ class SpotifyAPI {
     query: string,
     market: string = SPOTIFY_DEFAULT_MARKET,
     limit: number = SPOTIFY_DEFAULT_SEARCH_LIMIT,
-    offset: number = 0
+    offset: number = 0,
   ): Promise<Track[]> {
     const results = await this.search(
       query,
       [SpotifySearchType.TRACKS],
       market,
       limit,
-      offset
+      offset,
     );
     return results.tracks;
   }
@@ -183,14 +183,14 @@ class SpotifyAPI {
     query: string,
     market: string = SPOTIFY_DEFAULT_MARKET,
     limit: number = SPOTIFY_DEFAULT_SEARCH_LIMIT,
-    offset: number = 0
+    offset: number = 0,
   ): Promise<Album[]> {
     const results = await this.search(
       query,
       [SpotifySearchType.ALBUMS],
       market,
       limit,
-      offset
+      offset,
     );
     return results.albums;
   }
@@ -199,14 +199,14 @@ class SpotifyAPI {
     query: string,
     market: string = SPOTIFY_DEFAULT_MARKET,
     limit: number = SPOTIFY_DEFAULT_SEARCH_LIMIT,
-    offset: number = 0
+    offset: number = 0,
   ): Promise<Artist[]> {
     const results = await this.search(
       query,
       [SpotifySearchType.ARTISTS],
       market,
       limit,
-      offset
+      offset,
     );
     return results.artists;
   }
@@ -215,14 +215,14 @@ class SpotifyAPI {
     query: string,
     market: string = SPOTIFY_DEFAULT_MARKET,
     limit: number = SPOTIFY_DEFAULT_SEARCH_LIMIT,
-    offset: number = 0
+    offset: number = 0,
   ): Promise<Playlist[]> {
     const results = await this.search(
       query,
       [SpotifySearchType.PLAYLISTS],
       market,
       limit,
-      offset
+      offset,
     );
     return results.playlists;
   }
@@ -251,7 +251,7 @@ class SpotifyAPI {
       const data = r.data;
 
       const tracks = data.tracks.items.map((item: any) =>
-        this.formatTrack(item.track)
+        this.formatTrack(item.track),
       );
 
       return {
@@ -309,7 +309,7 @@ class SpotifyAPI {
   async getOembedData(url: string): Promise<OembedResponse> {
     try {
       const r = await axios.get(
-        `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`
+        `https://open.spotify.com/oembed?url=${encodeURIComponent(url)}`,
       );
       if (r.status !== 200) {
         throw new Error(`Spotify OEmbed Error: ${r.statusText}`);
@@ -331,7 +331,7 @@ class SpotifyAPI {
 
       const html = r.data as string;
       const jsonMatch = html.match(
-        /<script id="__NEXT_DATA__" type="application\/json">([^<]+)<\/script>/
+        /<script[^>]*id=["']__NEXT_DATA__["'][^>]*>\s*([\s\S]*?)\s*<\/script>/i,
       );
 
       if (!jsonMatch || jsonMatch.length < 2) {
@@ -342,20 +342,42 @@ class SpotifyAPI {
       const id = jsonData?.props?.pageProps?.state?.data?.entity?.uri
         ?.split(":")
         .pop();
+      console.log("Extracted JSON data:", {
+        title,
+        iframe_url,
+        thumbnail_url,
+        id,
+      });
       const coverArt =
         jsonData?.props?.pageProps?.state?.data?.entity?.coverArt?.sources?.[0]
           ?.url || "";
       const tracksData =
         jsonData?.props?.pageProps?.state?.data?.entity?.trackList || [];
 
-      const tracks: Track[] = tracksData.map((item: any) => ({
-        id: item?.uri.split(":").pop(),
-        title: item?.title,
-        artists: item?.subtitle,
-        duration: item?.duration/1000,
-        url: `https://open.spotify.com/track/${item.uri.split(":").pop()}`,
-        platform: "spotify",
-      }));
+      const tracks: Track[] = tracksData.map((item: any) => {
+        const trackId = item?.uri?.split(":").pop() || "";
+        return {
+          id: trackId,
+          title: item?.title || "",
+          artist: item?.subtitle || "",
+          album: title || "",
+          duration:
+            typeof item?.duration === "number"
+              ? Math.floor(item.duration / 1000)
+              : null,
+          url: trackId ? `https://open.spotify.com/track/${trackId}` : "",
+          images: coverArt
+            ? [
+                {
+                  url: coverArt,
+                  width: 640,
+                  height: 640,
+                },
+              ]
+            : [],
+          platform: "spotify",
+        };
+      });
 
       return {
         id: id || "",
@@ -366,7 +388,7 @@ class SpotifyAPI {
         url: url,
         images: [
           {
-            url: coverArt || thumbnail_url,            
+            url: coverArt || thumbnail_url,
             width: 640,
             height: 640,
           },
@@ -378,7 +400,7 @@ class SpotifyAPI {
   }
 
   parseSpotifyUrl(
-    url: string
+    url: string,
   ): { type: "track" | "playlist" | "album"; id: string } | null {
     const trackMatch = url.match(/track\/([a-zA-Z0-9]+)/);
     const playlistMatch = url.match(/playlist\/([a-zA-Z0-9]+)/);
@@ -438,23 +460,23 @@ class SpotifyAPI {
 
     if (types.includes(SpotifySearchType.TRACKS) && data.tracks) {
       results.tracks = data.tracks.items.map((item: any) =>
-        this.formatTrack(item)
+        this.formatTrack(item),
       );
     }
     if (types.includes(SpotifySearchType.ALBUMS) && data.albums) {
       results.albums = data.albums.items.map((item: any) =>
-        this.formatAlbum(item)
+        this.formatAlbum(item),
       );
     }
     if (types.includes(SpotifySearchType.ARTISTS) && data.artists) {
       results.artists = data.artists.items.map((item: any) =>
-        this.formatArtist(item)
+        this.formatArtist(item),
       );
     }
 
     if (types.includes(SpotifySearchType.PLAYLISTS) && data.playlists) {
       results.playlists = data.playlists.items.map((item: any) =>
-        this.formatPlaylist(item)
+        this.formatPlaylist(item),
       );
     }
     return results;

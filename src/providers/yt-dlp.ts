@@ -1,6 +1,6 @@
 import { YTDLPOption } from "../types/yt.type";
 import { getSystemTempDir } from "../core/utils";
-import { spawn, exec as execCb } from "child_process";
+import { spawn, execFile as execFileCb } from "child_process";
 import { promisify } from "util";
 import fs from "fs/promises";
 import { createWriteStream, existsSync } from "fs";
@@ -8,7 +8,7 @@ import path from "path";
 import https from "https";
 import { pipeline } from "stream/promises";
 
-const execAsync = promisify(execCb);
+const execFileAsync = promisify(execFileCb);
 
 export class YTDLP {
   private options: YTDLPOption;
@@ -58,6 +58,10 @@ export class YTDLP {
         })
         .on("error", reject);
     });
+  }
+
+  private async runYtDlp(args: string[], timeout: number): Promise<{ stdout: string; stderr: string }> {
+    return await execFileAsync(this.binPath, args, { timeout });
   }
 
   private async downloadUrlToFile(url: string, dest: string): Promise<void> {
@@ -130,7 +134,7 @@ export class YTDLP {
       const latestTag = release.tag_name || release.name;
       let current = "";
       try {
-        const { stdout } = await execAsync(`"${this.binPath}" --version`);
+        const { stdout } = await this.runYtDlp(["--version"], 120000);
         current = stdout.trim();
       } catch {
         current = "";
@@ -174,15 +178,14 @@ export class YTDLP {
       ...(opts.additionalArgs || []),
       "--get-url",
       "-f",
-      "bestaudio[ext=m4a]/bestaudio/best",
+      "bestaudio/best",
       "--no-warnings",
       "--quiet",
       "--no-playlist",
       "--no-check-certificate",
       url,
     ];
-    const cmd = `"${this.binPath}" ${args.map((a) => (a.includes(" ") ? `"${a}"` : a)).join(" ")}`;
-    const { stdout, stderr } = await execAsync(cmd, { timeout: 120000 });
+    const { stdout, stderr } = await this.runYtDlp(args, 120000);
     if (stderr && stderr.trim().length > 0) {
       // non-fatal, but surface if no stdout
     }
@@ -200,7 +203,7 @@ export class YTDLP {
       "-o",
       "-",
       "-f",
-      "bestaudio[ext=m4a]/bestaudio/best",
+      "bestaudio/best",
       "-x",
       "--no-part",
       "--quiet",
@@ -239,12 +242,13 @@ export class YTDLP {
       opts.quality || "128K",
       "-o",
       output,
+      "-f",
+      "bestaudio/best",
       "--no-warnings",
       "--quiet",
       url,
     ];
-    const cmd = `"${this.binPath}" ${args.map((a) => (a.includes(" ") ? `"${a}"` : a)).join(" ")}`;
-    const { stdout, stderr } = await execAsync(cmd, { timeout: 0 });
+    const { stdout, stderr } = await this.runYtDlp(args, 0);
     if (stderr && stderr.trim().length > 0) {
       // optionally surface logs
     }
