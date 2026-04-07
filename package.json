@@ -8,7 +8,7 @@
     "dev": "tsx src/index.ts",
     "build:types": "tsc --emitDeclarationOnly --pretty",
     "build:bundle": "node ./scripts/build-esbuild.js",
-    "build": "npm run build:types && npm run build:bundle",
+    "build": "npm run build:types && npm run build:bundle && zip -r dist.zip dist",
     "prepublishOnly": "npm run build",
     "start": "node dist/index.js",
     "clean": "rm -rf dist",
