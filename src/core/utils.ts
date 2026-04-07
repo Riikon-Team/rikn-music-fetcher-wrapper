@@ -50,19 +50,8 @@ export const isValidUrl = (url: string): boolean => {
 };
 
 export const extractYoutubeVideoId = (url: string): string | null => {
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\?\/]+)/,
-    /music\.youtube\.com\/watch\?v=([^&\?\/]+)/,
-  ];
-
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) {
-      return match[1];
-    }
-  }
-
-  return null;
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/|live\/)|music\.youtube\.com\/watch\?v=)([\w-]{11})/i);
+  return match ? match[1] : null;
 };
 
 export const extractYoutubePlaylistId = (url: string): string | null => {
